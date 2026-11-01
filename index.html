@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0f0f1a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #1a1a2e;
+      padding: 30px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid #e94560;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      color: #e94560;
+      margin-bottom: 10px;
+    }
+
+    .progress {
+      text-align: center;
+      color: #888;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+
+    .question {
+      font-size: 20px;
+      margin-bottom: 25px;
+      line-height: 1.4;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option {
+      background: #16213e;
+      padding: 14px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .option:hover {
+      background: #1f2b4d;
+    }
+
+    .option.selected {
+      border-color: #e94560;
+      background: #2a1a2e;
+    }
+
+    .option.correct {
+      border-color: #2ea44f;
+      background: #1a2e1a;
+    }
+
+    .option.wrong {
+      border-color: #d73a49;
+      background: #2e1a1a;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 25px;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #ff6b81;
+    }
+
+    .btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    .result {
+      text-align: center;
+      display: none;
+    }
+
+    .result.active {
+      display: block;
+    }
+
+    .score {
+      font-size: 48px;
+      color: #e94560;
+      margin: 20px 0;
+    }
+
+    .result-text {
+      font-size: 18px;
+      margin-bottom: 25px;
+      color: #ccc;
+    }
+
+    .quiz-box {
+      display: block;
+    }
+
+    .quiz-box.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Pjesa e Quiz-it -->
+    <div class="quiz-box" id="quizBox">
+      <h1>Quiz</h1>
+      <div class="progress" id="progress">Pyetja 1 nga 5</div>
+      
+      <div class="question" id="question">Pyetja këtu...</div>
+      
+      <div class="options" id="options"></div>
+      
+      <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Pyetja Tjetër</button>
+    </div>
+
+    <!-- Pjesa e Rezultatit -->
+    <div class="result" id="resultBox">
+      <h1>Rezultati</h1>
+      <div class="score" id="score">0/5</div>
+      <div class="result-text" id="resultText">Mirë!</div>
+      <button class="btn" onclick="restartQuiz()">Rifillo Quiz-in</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Cila është kryeqyteti i Shqipërisë?",
+        options: ["Korça", "Tirana", "Shkodra", "Vlora"],
+        answer: 1
+      },
+      {
+        question: "Sa është 12 + 8?",
+        options: ["18", "20", "22", "16"],
+        answer: 1
+      },
+      {
+        question: "Cili është gjuha e programimit që përdorëm më shumë?",
+        options: ["Python", "Java", "JavaScript", "C++"],
+        answer: 2
+      },
+      {
+        question: "Çfarë do të thotë HTML?",
+        options: [
+          "Hyper Text Markup Language",
+          "High Text Machine Language",
+          "Hyperlinks and Text Markup Language",
+          "Home Tool Markup Language"
+        ],
+        answer: 0
+      },
+      {
+        question: "Cili projekt ishte i pari që bëmë?",
+        options: ["Kalkulator", "Gjarpri", "Lista e Detyrave", "Quiz"],
+        answer: 2
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let selectedOption = null;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const progressEl = document.getElementById("progress");
+    const nextBtn = document.getElementById("nextBtn");
+    const quizBox = document.getElementById("quizBox");
+    const resultBox = document.getElementById("resultBox");
+
+    function loadQuestion() {
+      selectedOption = null;
+      nextBtn.disabled = true;
+
+      const q = questions[currentQuestion];
+      questionEl.textContent = q.question;
+      progressEl.textContent = `Pyetja ${currentQuestion + 1} nga ${questions.length}`;
+
+      optionsEl.innerHTML = "";
+      q.options.forEach((option, index) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.textContent = option;
+        div.onclick = () => selectOption(index, div);
+        optionsEl.appendChild(div);
+      });
+    }
+
+    function selectOption(index, element) {
+      // Hiq selektimin e mëparshëm
+      document.querySelectorAll(".option").forEach(opt => {
+        opt.classList.remove("selected");
+      });
+
+      element.classList.add("selected");
+      selectedOption = index;
+      nextBtn.disabled = false;
+    }
+
+    function nextQuestion() {
+      // Kontrollo përgjigjen
+      if (selectedOption === questions[currentQuestion].answer) {
+        score++;
+      }
+
+      currentQuestion++;
+
+      if (currentQuestion < questions.length) {
+        loadQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      quizBox.classList.add("hidden");
+      resultBox.classList.add("active");
+
+      document.getElementById("score").textContent = `${score}/${questions.length}`;
+
+      let text = "";
+      if (score === 5) text = "Shkëlqyeshëm! 🎉";
+      else if (score >= 3) text = "Mirë! Vazhdo kështu.";
+      else text = "Provo përsëri, do ia dalësh!";
+
+      document.getElementById("resultText").textContent = text;
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      resultBox.classList.remove("active");
+      quizBox.classList.remove("hidden");
+      loadQuestion();
+    }
+
+    // Nisja
+    loadQuestion();
+  </script>
+
+</body>
+</html>
